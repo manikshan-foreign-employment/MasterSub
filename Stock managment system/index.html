@@ -138,7 +138,7 @@
     <div id="loader"><i class="fas fa-circle-notch fa-spin fa-3x" style="color:var(--primary);"></i></div>
     <div id="toast">Message</div>
 
-    <!-- Hidden logo for precise PDF rendering (PDF galalli balasalagide) -->
+    <!-- Hidden logo for precise PDF rendering -->
     <img id="hidden-logo" src="Logo.png" style="display:none;" crossorigin="anonymous">
 
     <!-- Login Screen -->
@@ -174,13 +174,11 @@
                 <img src="Logo.png" class="logo-img" alt="Master Sub Logo" onerror="this.style.display='none'">
             </div>
             <div class="nav-menu">
-                <!-- Dashboard removed. Item Inquiry moved below Reports. -->
                 <a onclick="app.nav('inv')" id="n-inv" class="nav-link active"><i class="fas fa-box"></i> Inventory</a>
                 <a onclick="app.nav('sales')" id="n-sales" class="nav-link"><i class="fas fa-cash-register"></i> POS & Sales</a>
                 <a onclick="app.nav('damage')" id="n-damage" class="nav-link"><i class="fas fa-exclamation-triangle"></i> Damage Log</a>
                 <a onclick="app.nav('reports')" id="n-reports" class="nav-link"><i class="fas fa-chart-bar"></i> Master Reports</a>
                 
-                <!-- Moved Item Inquiry Here -->
                 <a onclick="app.nav('search')" id="n-search" class="nav-link"><i class="fas fa-search-location"></i> Item Inquiry</a>
                 
                 <a onclick="app.nav('settings')" id="n-settings" class="nav-link settings-link"><i class="fas fa-cog"></i> Settings</a>
@@ -217,11 +215,12 @@
                         <div class="grid-filters">
                             <div class="filter-item"><label>Transaction Date</label><input type="date" id="sale-date-f" class="form-control" onchange="app.renderSales()"></div>
                             <div class="filter-item"><label>Branch</label><select id="sale-branch-f" class="form-control" onchange="app.renderSales()"><option value="All">All Branches</option><option>Colombo</option><option>Negombo</option></select></div>
-                            <div class="filter-item" style="flex:2;"><label>Search Sales</label><input type="text" id="sale-q" class="form-control" placeholder="Search item..." onkeyup="app.renderSales()"></div>
+                            <div class="filter-item" style="flex:2;"><label>Search Sales</label><input type="text" id="sale-q" class="form-control" placeholder="Search customer or item..." onkeyup="app.renderSales()"></div>
                             <button id="btn-new-sale" class="btn btn-success" onclick="app.openModal('sale')" style="height:44px;"><i class="fas fa-shopping-cart"></i> New Sale</button>
                             <button class="btn btn-ghost" onclick="app.openModal('invoice-setup')" style="height:44px;"><i class="fas fa-file-invoice"></i> Generate Invoice</button>
                         </div>
-                        <div class="table-container"><table><thead><tr><th>Sel</th><th>Date</th><th>Product</th><th>Qty Sold</th><th>Mode</th><th>Total (LKR)</th><th style="text-align:right;">Action</th></tr></thead><tbody id="t-sales"></tbody></table></div>
+                        <!-- GROUPED SALES CONTAINER -->
+                        <div id="sales-group-container"></div>
                     </div>
                 </div>
 
@@ -493,7 +492,11 @@
     <!-- Modals -->
     <div class="overlay" id="m-inv"><div class="modal"><div class="modal-head"><span class="modal-title" id="m-inv-title" style="font-weight:700; font-size:1.1rem;">Stock Entry</span> <i class="fas fa-times" onclick="app.closeModal()" style="cursor:pointer; font-size:1.2rem;"></i></div><div class="modal-body"><input type="hidden" id="f-i-id"><div class="grid-filters" style="margin-bottom:0;"><div class="filter-item"><label>Date Added</label><input type="date" id="f-i-date" class="form-control"></div><div class="filter-item"><label>Target Branch</label><select id="f-i-branch" class="form-control"><option>Colombo</option><option>Negombo</option></select></div></div><div style="margin-top:20px;"><label>Product Name</label><input type="text" id="f-i-name" class="form-control" placeholder="Full Product Name"></div><div class="grid-filters" style="margin-top:20px; margin-bottom:0;"><div class="filter-item"><label>Quantity <span id="qty-lock-msg" style="color:var(--danger); font-size:0.75rem; display:none;"><i class="fas fa-lock"></i> Locked</span></label><input type="number" id="f-i-qty" class="form-control"></div><div class="filter-item"><label>Condition</label><select id="f-i-status" class="form-control"><option value="Active">Good Stock</option><option value="Damage">Damaged Unit</option></select></div></div><div style="margin-top:20px;"><label>Retail Price (LKR)</label><input type="number" id="f-i-sell" class="form-control" placeholder="0.00"></div><button id="btn-save-inv" class="btn btn-primary w-full" style="margin-top:30px; height:50px;" onclick="app.saveInv()">Save & Close</button></div></div></div>
     
-    <div class="overlay" id="m-sale"><div class="modal"><div class="modal-head"><span class="modal-title" style="font-weight:700; font-size:1.1rem;">New Transaction</span> <i class="fas fa-times" onclick="app.closeModal()" style="cursor:pointer; font-size:1.2rem;"></i></div><div class="modal-body"><div style="margin-bottom:20px;"><label>Date</label><input type="date" id="f-s-date" class="form-control"></div><div style="margin-bottom:20px;"><label>Select Product</label><input type="text" id="f-s-name" class="form-control" list="dl-prod" oninput="app.fillSale(this.value)" placeholder="Search inventory..."><datalist id="dl-prod"></datalist></div><div class="grid-filters" style="margin-bottom:0;"><div class="filter-item"><label>Quantity</label><input type="number" id="f-s-qty" class="form-control" oninput="app.calcSale()"></div><div class="filter-item"><label>Payment Type</label><select id="f-s-mode" class="form-control" onchange="app.toggleCheque(this.value)"><option>Cash</option><option>Credit</option><option>Cheque</option></select></div></div><div id="cheque-wrap" class="cheque-section" style="display:none;"><h5 style="margin-bottom:15px; color:var(--text-main);"><i class="fas fa-money-check-alt"></i> Cheque Details</h5><div class="grid-filters" style="margin-bottom:0;"><div class="filter-item"><label>Cheque No.</label><input type="text" id="f-s-ch-no" class="form-control"></div><div class="filter-item"><label>Cheque Date</label><input type="date" id="f-s-ch-date" class="form-control"></div></div></div><div style="margin-top:25px; background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #bbf7d0;"><label style="color:#15803d;">Gross Total Amount (LKR)</label><input type="number" id="f-s-amt" class="form-control" style="font-size:1.5rem; font-weight:800; color:#15803d; border:none; background:transparent; height:auto; padding:0;" readonly></div><button class="btn btn-success w-full" style="margin-top:25px; height:50px;" onclick="app.saveSale()">Complete Transaction</button></div></div></div>
+    <div class="overlay" id="m-sale"><div class="modal"><div class="modal-head"><span class="modal-title" style="font-weight:700; font-size:1.1rem;">New Transaction</span> <i class="fas fa-times" onclick="app.closeModal()" style="cursor:pointer; font-size:1.2rem;"></i></div><div class="modal-body">
+        
+        <div style="margin-bottom:20px;"><label>Customer Name</label><input type="text" id="f-s-customer" class="form-control" placeholder="Enter Customer Name (Optional)"></div>
+        
+        <div style="margin-bottom:20px;"><label>Date</label><input type="date" id="f-s-date" class="form-control"></div><div style="margin-bottom:20px;"><label>Select Product</label><input type="text" id="f-s-name" class="form-control" list="dl-prod" oninput="app.fillSale(this.value)" placeholder="Search inventory..."><datalist id="dl-prod"></datalist></div><div class="grid-filters" style="margin-bottom:0;"><div class="filter-item"><label>Quantity</label><input type="number" id="f-s-qty" class="form-control" oninput="app.calcSale()"></div><div class="filter-item"><label>Payment Type</label><select id="f-s-mode" class="form-control" onchange="app.toggleCheque(this.value)"><option>Cash</option><option>Credit</option><option>Cheque</option></select></div></div><div id="cheque-wrap" class="cheque-section" style="display:none;"><h5 style="margin-bottom:15px; color:var(--text-main);"><i class="fas fa-money-check-alt"></i> Cheque Details</h5><div class="grid-filters" style="margin-bottom:0;"><div class="filter-item"><label>Cheque No.</label><input type="text" id="f-s-ch-no" class="form-control"></div><div class="filter-item"><label>Cheque Date</label><input type="date" id="f-s-ch-date" class="form-control"></div></div></div><div style="margin-top:25px; background:#f0fdf4; padding:15px; border-radius:10px; border:1px solid #bbf7d0;"><label style="color:#15803d;">Gross Total Amount (LKR)</label><input type="number" id="f-s-amt" class="form-control" style="font-size:1.5rem; font-weight:800; color:#15803d; border:none; background:transparent; height:auto; padding:0;" readonly></div><button class="btn btn-success w-full" style="margin-top:25px; height:50px;" onclick="app.saveSale()">Complete Transaction</button></div></div></div>
     
     <!-- Updated Invoice Modal with Company and Customer details -->
     <div class="overlay" id="m-invoice-setup"><div class="modal"><div class="modal-head"><span class="modal-title" style="font-weight:700;">Generate Professional Invoice</span> <i class="fas fa-times" onclick="app.closeModal()" style="cursor:pointer;"></i></div><div class="modal-body">
@@ -932,19 +935,91 @@
             },
 
             renderSales: () => {
-                const tb = document.getElementById('t-sales'); tb.innerHTML = '';
+                const container = document.getElementById('sales-group-container');
+                if (!container) return;
+                container.innerHTML = '';
                 const q = document.getElementById('sale-q').value.toLowerCase();
                 const d = document.getElementById('sale-date-f').value;
                 const b = document.getElementById('sale-branch-f').value;
-                app.sales.sort((x,y)=>new Date(y.date)-new Date(x.date)).forEach(s => {
+                
+                let filteredSales = app.sales.filter(s => {
                     const sb = s.item.includes('Colombo') ? 'Colombo' : 'Negombo';
-                    if(s.item.toLowerCase().includes(q) && (b==='All'||sb===b) && (!d||s.date===d)) {
-                        const actionHtml = app.userRole === 'admin'
-                            ? `<i class="fas fa-trash-alt" style="color:var(--danger); cursor:pointer; opacity:0.7;" onclick="app.delSale('${s.id}')"></i>`
-                            : `<span style="color:#cbd5e1; font-size:0.8rem;">-</span>`;
-                        tb.innerHTML += `<tr><td><input type="checkbox" class="sale-sel" data-id="${s.id}"></td><td>${s.date}</td><td>${s.item}</td><td>${s.qty}</td><td><span class="badge badge-colombo">${s.mode}</span></td><td style="font-weight:700;">${parseFloat(s.amount).toLocaleString()}</td><td style="text-align:right;">${actionHtml}</td></tr>`;
-                    }
+                    const cName = s.customer ? s.customer.toLowerCase() : 'walk-in customer';
+                    const iName = s.item.toLowerCase();
+                    return (iName.includes(q) || cName.includes(q)) && (b==='All'||sb===b) && (!d||s.date===d);
                 });
+
+                filteredSales.sort((x,y)=>(y.timestamp || new Date(y.date).getTime())-(x.timestamp || new Date(x.date).getTime()));
+
+                const grouped = {};
+                filteredSales.forEach(s => {
+                    const key = s.customer && s.customer.trim() !== '' ? s.customer.trim() : 'Walk-in Customer';
+                    if(!grouped[key]) grouped[key] = [];
+                    grouped[key].push(s);
+                });
+
+                if (Object.keys(grouped).length === 0) {
+                    container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted); background:white; border-radius:12px; border:1px dashed var(--border);">No sales records found.</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const [customerName, salesList] of Object.entries(grouped)) {
+                    let customerTotal = salesList.reduce((sum, s) => sum + (parseFloat(s.amount) || 0), 0);
+
+                    html += `
+                    <div style="background: white; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;">
+                        <div style="background: linear-gradient(to right, #f8fafc, white); padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary);">
+                            <h4 style="margin: 0; color: var(--text-main); font-weight: 800; font-size: 1.1rem; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; background: #e0e7ff; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">
+                                    <i class="fas ${customerName === 'Walk-in Customer' ? 'fa-walking' : 'fa-user-tie'}"></i>
+                                </div>
+                                ${customerName}
+                            </h4>
+                            <div style="text-align: right;">
+                                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 700; margin-bottom: 2px;">Total Purchased</div>
+                                <div style="color: var(--primary); font-weight: 800; font-size: 1.1rem;">LKR ${customerTotal.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+                            </div>
+                        </div>
+                        <div class="table-container" style="border: none; border-radius: 0; margin-bottom: 0;">
+                            <table style="margin: 0;">
+                                <thead>
+                                    <tr style="background: #fdfdfd;">
+                                        <th style="width: 40px; text-align: center;"><i class="fas fa-check-square" style="color:#cbd5e1;"></i></th>
+                                        <th>Date</th>
+                                        <th>Product Details</th>
+                                        <th style="text-align:center;">Qty</th>
+                                        <th style="text-align:center;">Mode</th>
+                                        <th style="text-align:right;">Amount (LKR)</th>
+                                        <th style="text-align:right;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    salesList.forEach(s => {
+                        const actionHtml = app.userRole === 'admin'
+                            ? `<button class="btn btn-ghost btn-sm" style="color:var(--danger); border-color:#fee2e2; background:#fef2f2;" onclick="app.delSale('${s.id}')"><i class="fas fa-trash-alt"></i></button>`
+                            : `<span style="color:#cbd5e1; font-size:0.8rem;">-</span>`;
+
+                        html += `<tr>
+                            <td style="text-align:center;"><input type="checkbox" class="sale-sel" data-id="${s.id}" style="cursor:pointer; width:16px; height:16px; accent-color:var(--primary);"></td>
+                            <td><span style="color:var(--text-muted); font-size:0.8rem;"><i class="far fa-calendar-alt"></i> ${s.date}</span></td>
+                            <td><strong style="color:var(--text-main); font-size:0.9rem;">${s.item}</strong></td>
+                            <td style="text-align:center;"><span style="background:#f1f5f9; padding:4px 10px; border-radius:20px; font-weight:700; font-size:0.8rem;">${s.qty}</span></td>
+                            <td style="text-align:center;"><span class="badge ${s.mode === 'Cash' ? 'badge-avail' : (s.mode === 'Credit' ? 'badge-damage' : 'badge-colombo')}">${s.mode}</span></td>
+                            <td style="text-align:right; font-weight:700; color:var(--text-main);">LKR ${parseFloat(s.amount).toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+                            <td style="text-align:right;">${actionHtml}</td>
+                        </tr>`;
+                    });
+
+                    html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>`;
+                }
+                container.innerHTML = html;
             },
 
             renderDamage: () => {
@@ -1241,6 +1316,7 @@
                     document.getElementById('m-inv-title').innerText = "Add New Stock";
                 }
                 if(m==='sale') {
+                    document.getElementById('f-s-customer').value=''; 
                     document.getElementById('f-s-date').value = new Date().toISOString().split('T')[0]; 
                     document.getElementById('cheque-wrap').style.display='none';
                     document.getElementById('f-s-name').value=''; 
@@ -1313,9 +1389,21 @@
             },
 
             saveSale: async () => {
+                const custName = document.getElementById('f-s-customer').value;
                 const n = document.getElementById('f-s-name').value;
                 const q = parseFloat(document.getElementById('f-s-qty').value)||0;
-                const d = { date: document.getElementById('f-s-date').value, item: n, qty: q, mode: document.getElementById('f-s-mode').value, amount: parseFloat(document.getElementById('f-s-amt').value)||0, chNo: document.getElementById('f-s-ch-no').value, chDate: document.getElementById('f-s-ch-date').value };
+                
+                const d = { 
+                    customer: custName, 
+                    timestamp: Date.now(), 
+                    date: document.getElementById('f-s-date').value, 
+                    item: n, 
+                    qty: q, 
+                    mode: document.getElementById('f-s-mode').value, 
+                    amount: parseFloat(document.getElementById('f-s-amt').value)||0, 
+                    chNo: document.getElementById('f-s-ch-no').value, 
+                    chDate: document.getElementById('f-s-ch-date').value 
+                };
                 
                 await addDoc(collection(db,"sales"), d);
                 
